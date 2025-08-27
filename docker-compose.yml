@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (commented out for SQLite development)
+  # postgres:
+  #   image: postgres:15
+  #   container_name: nail-salon-db
+  #   environment:
+  #     POSTGRES_DB: nail_salon
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: password
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   networks:
+  #     - nail-salon-network
+
+  # Backend API
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: nail-salon-api
+    environment:
+      DATABASE_URL: file:./dev.db
+      JWT_SECRET: your-jwt-secret-key
+      NODE_ENV: production
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    # depends_on:
+    #   - postgres
+    volumes:
+      - ./server:/app
+    networks:
+      - nail-salon-network
+
+  # Frontend Client
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: nail-salon-client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    volumes:
+      - ./client:/app
+    networks:
+      - nail-salon-network
+
+volumes:
+  postgres_data:
+
+networks:
+  nail-salon-network:
+    driver: bridge
