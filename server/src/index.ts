@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import memberRoutes from './routes/memberRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -27,7 +28,7 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -42,6 +43,9 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// API Routes
+app.use('/api/members', memberRoutes);
 
 // API Routes placeholder
 app.get('/api', (req, res) => {

@@ -30,7 +30,11 @@ model Member {
   address          String?
   membershipLevel  String          @default("BRONZE")
   points           Int             @default(0)
+  balance          Float           @default(0)
   totalSpent       Float           @default(0)
+  cashSpent        Float           @default(0)
+  visitCount       Int             @default(0)
+  debtAmount       Float           @default(0)
   joinDate         DateTime        @default(now())
   lastVisit        DateTime?
   notes            String?
@@ -110,11 +114,15 @@ model Transaction {
   id            String          @id @default(cuid())
   memberId      String
   appointmentId String?
-  type          String
+  type          String          // RECHARGE, CONSUME, POINTS_REDEEM, REFUND
   amount        Float
+  balanceBefore Float           @default(0)
+  balanceAfter  Float           @default(0)
   pointsEarned  Int             @default(0)
   pointsUsed    Int             @default(0)
+  paymentMethod String?         // CASH, CARD, ALIPAY, WECHAT, BALANCE
   description   String
+  operatorName  String?
   createdAt     DateTime        @default(now())
 
   member      Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -143,4 +151,5 @@ model Product {
 // Gender: MALE, FEMALE, OTHER  
 // MembershipLevel: BRONZE, SILVER, GOLD, PLATINUM
 // AppointmentStatus: SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
-// TransactionType: SERVICE, PRODUCT, MEMBERSHIP, POINTS_REDEMPTION
+// TransactionType: RECHARGE, CONSUME, POINTS_REDEEM, REFUND
+// PaymentMethod: CASH, CARD, ALIPAY, WECHAT, BALANCE

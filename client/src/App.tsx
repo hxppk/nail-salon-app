@@ -1,7 +1,11 @@
-import React from 'react'
+import { } from 'react'
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import MemberDetail from './pages/MemberDetail'
+import MemberList from './pages/MemberList'
+import MemberRegister from './pages/MemberRegister'
 import './App.css'
 
-function App() {
+function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
       <div className="container mx-auto px-4 py-8">
@@ -20,9 +24,12 @@ function App() {
               <div className="text-3xl mb-4">👥</div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">会员管理</h3>
               <p className="text-gray-600 mb-4">管理会员信息、等级和积分</p>
-              <button className="bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition-colors">
-                进入管理
-              </button>
+              <Link 
+                to="/members" 
+                className="inline-block bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 transition-colors"
+              >
+                会员列表
+              </Link>
             </div>
           </div>
           
@@ -87,6 +94,19 @@ function App() {
         </footer>
       </div>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/members" element={<MemberList />} />
+        <Route path="/members/register" element={<MemberRegister />} />
+        <Route path="/member/:id" element={<MemberDetail />} />
+      </Routes>
+    </Router>
   )
 }
 
