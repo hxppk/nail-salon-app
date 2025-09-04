@@ -4,7 +4,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 interface RechargeRequest {
-  amount: number;
+  amount: number; // 充值金额（用户实际支付金额）
+  giftAmount: number; // 赠金金额（商家赠送金额，可以为0）
   paymentMethod: string;
   description?: string;
   operatorName?: string;
@@ -17,7 +18,7 @@ interface CreateMemberRequest {
   birthday?: string;
   gender?: string;
   address?: string;
-  membershipLevel?: string;
+  memberDiscount: number; // 会员折扣，必选：0.9(9折)、0.88(88折)、0.85(85折)、0.8(8折)、0.75(75折)、0.7(7折)
   notes?: string;
 }
 
@@ -25,7 +26,7 @@ interface MemberListQuery {
   page?: string;
   limit?: string;
   search?: string;
-  membershipLevel?: string;
+  discountLevel?: string;
   balanceStatus?: string;
   registrationPeriod?: string;
   activityStatus?: string;
@@ -42,6 +43,12 @@ export const createMember = async (req: Request, res: Response) => {
     // Validate required fields
     if (!memberData.name || !memberData.phone) {
       return res.status(400).json({ error: '姓名和手机号是必填项' });
+    }
+
+    // Validate member discount (required field)
+    const validDiscounts = [0.9, 0.88, 0.85, 0.8, 0.75, 0.7];
+    if (!memberData.memberDiscount || !validDiscounts.includes(memberData.memberDiscount)) {
+      return res.status(400).json({ error: '请选择有效的会员折扣' });
     }
 
     // Validate phone number format
@@ -75,14 +82,13 @@ export const createMember = async (req: Request, res: Response) => {
         birthday: memberData.birthday ? new Date(memberData.birthday) : null,
         gender: memberData.gender || null,
         address: memberData.address || null,
-        membershipLevel: memberData.membershipLevel || 'BRONZE',
+        memberDiscount: memberData.memberDiscount,
         notes: memberData.notes || null,
-        balance: 0,
+        rechargeBalance: 0,
+        bonusBalance: 0,
         totalSpent: 0,
         cashSpent: 0,
-        visitCount: 0,
-        debtAmount: 0,
-        points: 0
+        visitCount: 0
       }
     });
 
@@ -103,7 +109,7 @@ export const getMembers = async (req: Request, res: Response) => {
       page = '1',
       limit = '20',
       search = '',
-      membershipLevel = '',
+      discountLevel = '',
       balanceStatus = '',
       registrationPeriod = '',
       activityStatus = '',
@@ -128,22 +134,22 @@ export const getMembers = async (req: Request, res: Response) => {
     }
 
     // Filter by membership level
-    if (membershipLevel) {
-      where.membershipLevel = membershipLevel;
+    if (discountLevel) {
+      where.memberDiscount = parseFloat(discountLevel);
     }
 
     // Filter by balance status
     if (balanceStatus) {
       switch (balanceStatus) {
         case 'has_balance':
-          where.balance = { gt: 0 };
+          where.OR = [
+            { rechargeBalance: { gt: 0 } },
+            { bonusBalance: { gt: 0 } }
+          ];
           break;
         case 'no_balance':
-          where.balance = { lte: 0 };
-          where.debtAmount = { lte: 0 };
-          break;
-        case 'has_debt':
-          where.debtAmount = { gt: 0 };
+          where.rechargeBalance = { lte: 0 };
+          where.bonusBalance = { lte: 0 };
           break;
       }
     }
@@ -288,10 +294,14 @@ export const getMemberById = async (req: Request, res: Response) => {
 export const rechargeBalance = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { amount, paymentMethod, description, operatorName }: RechargeRequest = req.body;
+    const { amount, giftAmount, paymentMethod, description, operatorName }: RechargeRequest = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    if (giftAmount < 0) {
+      return res.status(400).json({ error: 'Gift amount cannot be negative' });
     }
 
     if (!paymentMethod) {
@@ -306,8 +316,14 @@ export const rechargeBalance = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Member not found' });
     }
 
-    const balanceBefore = member.balance;
-    const balanceAfter = balanceBefore + amount;
+    const rechargeBalanceBefore = member.rechargeBalance;
+    const bonusBalanceBefore = member.bonusBalance;
+    const totalBalanceBefore = rechargeBalanceBefore + bonusBalanceBefore;
+    
+    // 充值金额进入充值余额，赠金金额进入赠金余额
+    const rechargeBalanceAfter = rechargeBalanceBefore + amount;
+    const bonusBalanceAfter = bonusBalanceBefore + giftAmount;
+    const totalBalanceAfter = rechargeBalanceAfter + bonusBalanceAfter;
 
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -315,7 +331,8 @@ export const rechargeBalance = async (req: Request, res: Response) => {
       const updatedMember = await tx.member.update({
         where: { id },
         data: {
-          balance: balanceAfter,
+          rechargeBalance: rechargeBalanceAfter,
+          bonusBalance: bonusBalanceAfter,
           updatedAt: new Date()
         }
       });
@@ -325,11 +342,12 @@ export const rechargeBalance = async (req: Request, res: Response) => {
         data: {
           memberId: id,
           type: 'RECHARGE',
-          amount,
-          balanceBefore,
-          balanceAfter,
+          amount, // 充值金额
+          giftAmount, // 赠金金额
+          balanceBefore: totalBalanceBefore,
+          balanceAfter: totalBalanceAfter,
           paymentMethod,
-          description: description || `充值 ¥${amount}`,
+          description: description || `充值 ¥${amount}${giftAmount > 0 ? ` + 赠¥${giftAmount}` : ''} = 到账¥${amount + giftAmount}`,
           operatorName
         }
       });
@@ -405,7 +423,8 @@ export const updateMember = async (req: Request, res: Response) => {
 
     // Remove fields that shouldn't be updated directly
     delete updates.id;
-    delete updates.balance;
+    delete updates.rechargeBalance;
+    delete updates.bonusBalance;
     delete updates.totalSpent;
     delete updates.cashSpent;
     delete updates.visitCount;
@@ -446,12 +465,31 @@ export const consumeBalance = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Member not found' });
     }
 
-    if (member.balance < amount) {
+    const totalBalance = member.rechargeBalance + member.bonusBalance;
+    if (totalBalance < amount) {
       return res.status(400).json({ error: 'Insufficient balance' });
     }
 
-    const balanceBefore = member.balance;
-    const balanceAfter = balanceBefore - amount;
+    const rechargeBalanceBefore = member.rechargeBalance;
+    const bonusBalanceBefore = member.bonusBalance;
+    
+    // Consume bonus balance first, then recharge balance
+    let remainingAmount = amount;
+    let newBonusBalance = bonusBalanceBefore;
+    let newRechargeBalance = rechargeBalanceBefore;
+    
+    if (remainingAmount > 0 && newBonusBalance > 0) {
+      const bonusUsed = Math.min(remainingAmount, newBonusBalance);
+      newBonusBalance -= bonusUsed;
+      remainingAmount -= bonusUsed;
+    }
+    
+    if (remainingAmount > 0) {
+      newRechargeBalance -= remainingAmount;
+    }
+    
+    const totalBalanceBefore = rechargeBalanceBefore + bonusBalanceBefore;
+    const totalBalanceAfter = newRechargeBalance + newBonusBalance;
 
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -459,8 +497,10 @@ export const consumeBalance = async (req: Request, res: Response) => {
       const updatedMember = await tx.member.update({
         where: { id },
         data: {
-          balance: balanceAfter,
+          rechargeBalance: newRechargeBalance,
+          bonusBalance: newBonusBalance,
           totalSpent: member.totalSpent + amount,
+          cashSpent: member.cashSpent + amount,
           visitCount: member.visitCount + 1,
           lastVisit: new Date(),
           updatedAt: new Date()
@@ -474,8 +514,8 @@ export const consumeBalance = async (req: Request, res: Response) => {
           appointmentId,
           type: 'CONSUME',
           amount: -amount,
-          balanceBefore,
-          balanceAfter,
+          balanceBefore: totalBalanceBefore,
+          balanceAfter: totalBalanceAfter,
           paymentMethod: 'BALANCE',
           description: description || `消费 ¥${amount}`,
           operatorName
@@ -529,15 +569,15 @@ export const getMemberStats = async (req: Request, res: Response) => {
       memberId: member.id,
       name: member.name,
       phone: member.phone,
-      membershipLevel: member.membershipLevel,
-      balance: member.balance,
-      points: member.points,
+      membershipLevel: 'BRONZE', // Default membership level for compatibility
+      balance: member.rechargeBalance + member.bonusBalance,
+      points: 0, // Removed field, default to 0 for compatibility
       totalSpent: member.totalSpent,
       cashSpent,
       visitCount: member.visitCount,
-      debtAmount: member.debtAmount,
+      debtAmount: 0, // Removed field, default to 0 for compatibility
       lastVisit: member.lastVisit,
-      joinDate: member.joinDate,
+      joinDate: member.createdAt, // Use createdAt as joinDate
       recentActivity: recentTransactions,
       totalAppointments: member.appointments.length
     };

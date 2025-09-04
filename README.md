@@ -150,8 +150,12 @@ nail-salon-app/
    npm install
    npm run db:generate
    npm run db:migrate
-   npm run dev
+   npm run dev:5225
    ```
+   - 默认运行端口：后端 API `http://localhost:5225`
+   - 必要环境变量（可在 `server/.env` 设置）：
+     - `PORT=5225`
+     - `CORS_ORIGIN=http://localhost:3233`
 
 5. **安装依赖并启动前端**
    ```bash
@@ -159,6 +163,11 @@ nail-salon-app/
    npm install
    npm run dev
    ```
+   - 默认运行端口：前端 `http://localhost:3233`
+   - 开发代理：`/api` 代理到 `http://localhost:5225`
+   - 建议的前端环境变量（开发）位于 `client/.env`：
+     - `VITE_API_BASE_URL=/api`（使用 Vite 代理到后端）
+     - 如需直连后端：`VITE_API_BASE_URL=http://localhost:5225/api`
 
 ### 使用Docker
 
@@ -172,6 +181,34 @@ docker-compose logs -f
 # 停止系统
 docker-compose down
 ```
+
+运行端口（Docker）：
+- 前端：`http://localhost:3233`
+- 后端 API：`http://localhost:5225`
+
+如需自定义端口：
+- 前端：修改 `client/vite.config.ts` 中 `server.port`
+- 后端：设置环境变量 `PORT`（默认 5225）并相应更新 `CORS_ORIGIN`
+
+## 端口与环境变量约定
+
+- 前端开发端口：`3233`
+- 后端开发端口：`5225`
+- Vite 代理：将前端的相对路径 `/api` 转发到 `http://localhost:5225`
+- 推荐 `.env` 配置：
+  - `client/.env`：`VITE_API_BASE_URL=/api`
+  - `server/.env`：`PORT=5225`、`CORS_ORIGIN=http://localhost:3233`
+
+## 常见问题（Troubleshooting）
+
+- 命中 AirPlay（端口 5000）导致 403：
+  - Network 中看到 `Server: AirTunes` 且 URL 指向 `http://localhost:5000`，请将 `client/.env` 改为 `VITE_API_BASE_URL=/api` 或 `http://localhost:5225/api` 并重启前端。
+- 浏览器跨域（CORS）报错：
+  - 开发环境优先使用 Vite 代理（`/api` 相对路径），即可避免 CORS。
+  - 如需直连后端，请在 `server/.env` 设置 `CORS_ORIGIN=http://localhost:3233` 并重启后端。
+-
+  快速联通性验证：在浏览器控制台执行
+  `fetch('/api').then(r=>r.json()).then(console.log)` 应返回 API 信息 JSON。
 
 ## API接口
 

@@ -15,7 +15,8 @@ dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 5000;
+const BASE_PORT = parseInt(process.env.PORT || '5225', 10);
+const ENV_PORT_SET = !!process.env.PORT;
 
 // Rate limiting
 const limiter = rateLimit({
@@ -30,7 +31,7 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:3001'],
+  origin: process.env.CORS_ORIGIN || ['http://localhost:3233'],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -101,12 +102,36 @@ const gracefulShutdown = async () => {
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Nail Salon API Server running on port ${PORT}`);
-  console.log(`📊 Health check available at http://localhost:${PORT}/health`);
-  console.log(`🔗 API docs available at http://localhost:${PORT}/api`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Start server with conditional port fallback
+const tryListen = (port: number, retries = 5) => {
+  const server = app.listen(port, () => {
+    console.log(`🚀 Nail Salon API Server running on port ${port}`);
+    console.log(`📊 Health check available at http://localhost:${port}/health`);
+    console.log(`🔗 API docs available at http://localhost:${port}/api`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+
+  server.on('error', (err: any) => {
+    if (err && err.code === 'EADDRINUSE') {
+      if (ENV_PORT_SET) {
+        console.error(`❌ Port ${port} is in use. Exiting because PORT is explicitly set.`);
+        process.exit(1);
+      }
+      if (retries > 0) {
+        const nextPort = port + 1;
+        console.warn(`⚠️ Port ${port} in use, trying ${nextPort}...`);
+        setTimeout(() => tryListen(nextPort, retries - 1), 300);
+      } else {
+        console.error('❌ Failed to find a free port.');
+        process.exit(1);
+      }
+    } else {
+      console.error('❌ Failed to start server:', err);
+      process.exit(1);
+    }
+  });
+};
+
+tryListen(BASE_PORT);
 
 export default app;

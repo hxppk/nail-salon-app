@@ -102,7 +102,7 @@ export const getAppointments = async (req: Request, res: Response) => {
               id: true,
               name: true,
               phone: true,
-              membershipLevel: true,
+              memberDiscount: true,
             },
           },
           staff: {
@@ -209,7 +209,7 @@ export const createAppointment = async (req: Request, res: Response) => {
             id: true,
             name: true,
             phone: true,
-            membershipLevel: true,
+            memberDiscount: true,
           },
         },
         staff: {
@@ -249,9 +249,9 @@ export const getAppointmentById = async (req: Request, res: Response) => {
             id: true,
             name: true,
             phone: true,
-            membershipLevel: true,
-            balance: true,
-            points: true,
+            memberDiscount: true,
+            rechargeBalance: true,
+            bonusBalance: true,
           },
         },
         staff: {
@@ -318,7 +318,7 @@ export const updateAppointment = async (req: Request, res: Response) => {
             id: true,
             name: true,
             phone: true,
-            membershipLevel: true,
+            memberDiscount: true,
           },
         },
         staff: {
@@ -367,7 +367,7 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
             id: true,
             name: true,
             phone: true,
-            membershipLevel: true,
+            memberDiscount: true,
           },
         },
         staff: {

@@ -28,13 +28,12 @@ model Member {
   birthday         DateTime?
   gender           String?
   address          String?
-  membershipLevel  String          @default("BRONZE")
-  points           Int             @default(0)
-  balance          Float           @default(0)
-  totalSpent       Float           @default(0)
-  cashSpent        Float           @default(0)
-  visitCount       Int             @default(0)
-  debtAmount       Float           @default(0)
+  memberDiscount   Float           @default(1.0) // 会员折扣，1.0表示无折扣，0.9表示9折
+  rechargeBalance  Float           @default(0)   // 充值余额
+  bonusBalance     Float           @default(0)   // 赠金余额
+  totalSpent       Float           @default(0)   // 总消费金额
+  cashSpent        Float           @default(0)   // 现金消费金额
+  visitCount       Int             @default(0)   // 到店次数
   joinDate         DateTime        @default(now())
   lastVisit        DateTime?
   notes            String?
@@ -126,7 +125,8 @@ model Transaction {
   memberId      String
   appointmentId String?
   type          String          // RECHARGE, CONSUME, POINTS_REDEEM, REFUND
-  amount        Float
+  amount        Float           // 充值金额或消费金额
+  giftAmount    Float           @default(0) // 赠金金额，仅在RECHARGE类型时使用
   balanceBefore Float           @default(0)
   balanceAfter  Float           @default(0)
   pointsEarned  Int             @default(0)

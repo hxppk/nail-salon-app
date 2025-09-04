@@ -7,7 +7,7 @@ import {
   ServiceStats,
 } from '../types';
 
-const API_BASE_URL = 'http://localhost:3002/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
 
 export const serviceApi = {
   // Get all services with filters
@@ -33,7 +33,7 @@ export const serviceApi = {
   getServiceById: async (id: string): Promise<Service> => {
     const response = await fetch(`${API_BASE_URL}/services/${id}`);
     if (!response.ok) {
-      throw new Error('Failed to fetch service');
+      throw new Error(`Failed to fetch service: ${response.status} ${response.statusText}`);
     }
     return response.json();
   },

@@ -27,9 +27,9 @@ services:
       DATABASE_URL: file:./dev.db
       JWT_SECRET: your-jwt-secret-key
       NODE_ENV: production
-      PORT: 5000
+      PORT: 5225
     ports:
-      - "5000:5000"
+      - "5225:5225"
     # depends_on:
     #   - postgres
     volumes:
@@ -44,7 +44,7 @@ services:
       dockerfile: Dockerfile
     container_name: nail-salon-client
     ports:
-      - "3000:3000"
+      - "3233:3233"
     depends_on:
       - api
     volumes:
