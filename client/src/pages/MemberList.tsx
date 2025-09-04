@@ -21,7 +21,7 @@ const MemberList: React.FC = () => {
     page: 1,
     limit: 20,
     search: '',
-    membershipLevel: '',
+    discountLevel: '',
     balanceStatus: '',
     registrationPeriod: '',
     activityStatus: '',
@@ -64,29 +64,23 @@ const MemberList: React.FC = () => {
     handleFilterChange('page', newPage);
   };
 
-  const getMembershipLevelText = (level: string) => {
-    const levels = {
-      BRONZE: '铜牌',
-      SILVER: '银牌',
-      GOLD: '金牌',
-      PLATINUM: '白金'
-    };
-    return levels[level as keyof typeof levels] || level;
+  const discountLabels: Record<number, string> = {
+    1: '无折扣',
+    0.9: '9折',
+    0.88: '88折',
+    0.85: '85折',
+    0.8: '8折',
+    0.75: '75折',
+    0.7: '7折',
   };
 
-  const getMembershipLevelColor = (level: string) => {
-    switch (level) {
-      case 'BRONZE':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'SILVER':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'GOLD':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'PLATINUM':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+  const getDiscountBadge = (discount: number) => {
+    const label = discountLabels[discount] || `${Math.round(discount * 100)}折`;
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-purple-50 text-purple-700 border-purple-200">
+        {label}
+      </span>
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -149,15 +143,18 @@ const MemberList: React.FC = () => {
       {/* Filters */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <select
-          value={filters.membershipLevel || ''}
-          onChange={(e) => handleFilterChange('membershipLevel', e.target.value)}
+          value={filters.discountLevel || ''}
+          onChange={(e) => handleFilterChange('discountLevel', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
         >
-          <option value="">全部等级</option>
-          <option value="BRONZE">铜牌会员</option>
-          <option value="SILVER">银牌会员</option>
-          <option value="GOLD">金牌会员</option>
-          <option value="PLATINUM">白金会员</option>
+          <option value="">会员折扣</option>
+          <option value="1">无折扣</option>
+          <option value="0.9">9折</option>
+          <option value="0.88">88折</option>
+          <option value="0.85">85折</option>
+          <option value="0.8">8折</option>
+          <option value="0.75">75折</option>
+          <option value="0.7">7折</option>
         </select>
 
         <select
@@ -223,7 +220,7 @@ const MemberList: React.FC = () => {
             page: 1,
             limit: 20,
             search: '',
-            membershipLevel: '',
+            discountLevel: '',
             balanceStatus: '',
             registrationPeriod: '',
             activityStatus: '',
@@ -330,18 +327,14 @@ const MemberList: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Membership Level */}
-                  <div className="mb-3">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getMembershipLevelColor(member.membershipLevel)}`}>
-                      {getMembershipLevelText(member.membershipLevel)}
-                    </span>
-                  </div>
+                  {/* Member Discount */}
+                  <div className="mb-3">{getDiscountBadge(member.memberDiscount)}</div>
 
                   {/* Stats */}
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">余额:</span>
-                      <span className={`font-medium ${member.balance > 0 ? 'text-green-600' : member.debtAmount > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                      <span className={`font-medium ${member.balance > 0 ? 'text-green-600' : 'text-gray-900'}`}>
                         ¥{member.balance.toFixed(2)}
                       </span>
                     </div>
@@ -349,10 +342,7 @@ const MemberList: React.FC = () => {
                       <span className="text-gray-500">总消费:</span>
                       <span className="font-medium text-gray-900">¥{member.totalSpent.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">积分:</span>
-                      <span className="font-medium text-blue-600">{member.points}</span>
-                    </div>
+                    {/* 积分已移除 */}
                   </div>
 
                   {/* Last Visit */}

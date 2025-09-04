@@ -15,7 +15,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
 }) => {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<'ALL' | 'RECHARGE' | 'CONSUME' | 'POINTS_REDEEM' | 'REFUND'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'RECHARGE' | 'CONSUME' | 'REFUND'>('ALL');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -63,9 +63,8 @@ const TransactionList: React.FC<TransactionListProps> = ({
     const types = {
       RECHARGE: '充值',
       CONSUME: '消费',
-      POINTS_REDEEM: '积分兑换',
       REFUND: '退款'
-    };
+    } as const;
     return types[type as keyof typeof types] || type;
   };
 
@@ -73,9 +72,8 @@ const TransactionList: React.FC<TransactionListProps> = ({
     const colors = {
       RECHARGE: 'text-green-600 bg-green-50',
       CONSUME: 'text-red-600 bg-red-50',
-      POINTS_REDEEM: 'text-blue-600 bg-blue-50',
       REFUND: 'text-orange-600 bg-orange-50'
-    };
+    } as const;
     return colors[type as keyof typeof colors] || 'text-gray-600 bg-gray-50';
   };
 
@@ -122,11 +120,11 @@ const TransactionList: React.FC<TransactionListProps> = ({
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-900">消费记录</h3>
+        <h3 className="text-xl font-bold text-gray-900">会员记录</h3>
         
         {/* Filter tabs */}
         <div className="flex bg-gray-100 rounded-lg p-1">
-          {['ALL', 'RECHARGE', 'CONSUME', 'POINTS_REDEEM', 'REFUND'].map((filterType) => (
+          {['ALL', 'RECHARGE', 'CONSUME', 'REFUND'].map((filterType) => (
             <button
               key={filterType}
               onClick={() => setFilter(filterType as any)}
@@ -171,11 +169,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                     )}
-                    {transaction.type === 'POINTS_REDEEM' && (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                      </svg>
-                    )}
                     {transaction.type === 'REFUND' && (
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -215,16 +208,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                   <p className="text-sm text-gray-500">
                     余额: ¥{transaction.balanceAfter.toFixed(2)}
                   </p>
-                  {transaction.pointsEarned > 0 && (
-                    <p className="text-xs text-blue-600">
-                      +{transaction.pointsEarned} 积分
-                    </p>
-                  )}
-                  {transaction.pointsUsed > 0 && (
-                    <p className="text-xs text-orange-600">
-                      -{transaction.pointsUsed} 积分
-                    </p>
-                  )}
+                  {/* 积分显示已移除 */}
                 </div>
               </div>
             ))}

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { appointmentApi } from '../../services/appointmentApi';
 import { memberApi } from '../../services/memberApi';
+import { serviceApi } from '../../services/serviceApi';
 import { Appointment, StaffMember, Member } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -36,6 +37,8 @@ export const EditAppointment: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isNewMember, setIsNewMember] = useState(false);
   const [phoneNumberType, setPhoneNumberType] = useState<'real' | 'virtual'>('real');
+  const [services, setServices] = useState<{ id: string; name: string; duration: number; price: number; category?: string }[]>([]);
+  const [serviceQuery, setServiceQuery] = useState('');
 
   const {
     register,
@@ -180,6 +183,32 @@ export const EditAppointment: React.FC = () => {
     }
   };
 
+  // Search services
+  useEffect(() => {
+    const searchServices = async () => {
+      const q = serviceQuery || watch('serviceName');
+      if (!q || q.length < 1) {
+        setServices([]);
+        return;
+      }
+      try {
+        const resp = await serviceApi.getServices({ search: q, limit: 8 });
+        setServices(resp.services || []);
+      } catch (e) {
+        // silent
+      }
+    };
+    const t = setTimeout(searchServices, 250);
+    return () => clearTimeout(t);
+  }, [serviceQuery, watch]);
+
+  const handleServiceSelect = (svc: { name: string; duration: number }) => {
+    setValue('serviceName', svc.name);
+    if (svc.duration) setValue('duration', svc.duration as any);
+    setServiceQuery('');
+    setServices([]);
+  };
+
   if (isLoading && !appointment) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -286,7 +315,7 @@ export const EditAppointment: React.FC = () => {
                     <div className="font-medium">{selectedMember.name}</div>
                     <div className="text-sm text-gray-600">{selectedMember.phone}</div>
                     <div className="text-sm text-gray-600">
-                      {selectedMember.membershipLevel} 会员 | 余额: ¥{selectedMember.balance}
+                      折扣: {selectedMember.memberDiscount === 1 ? '无折扣' : `${Math.round(selectedMember.memberDiscount * 100)}%`} | 余额: ¥{selectedMember.balance.toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -409,18 +438,37 @@ export const EditAppointment: React.FC = () => {
 
           {/* Service and Staff */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 服务项目 *
               </label>
               <input
                 type="text"
                 {...register('serviceName')}
+                onChange={(e) => setServiceQuery(e.target.value)}
                 placeholder="如：独立款式设计"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
               {errors.serviceName && (
                 <p className="mt-1 text-sm text-red-600">{errors.serviceName.message}</p>
+              )}
+              {services.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-56 overflow-auto">
+                  {services.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => handleServiceSelect(s)}
+                      className="w-full px-3 py-2 text-left hover:bg-gray-50"
+                    >
+                      <div className="flex justify-between">
+                        <div className="font-medium">{s.name}</div>
+                        <div className="text-xs text-gray-500">{s.duration}分钟 · ¥{s.price.toFixed(2)}</div>
+                      </div>
+                      {s.category && <div className="text-xs text-gray-400 mt-0.5">{s.category}</div>}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 

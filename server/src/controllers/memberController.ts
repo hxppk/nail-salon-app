@@ -46,7 +46,7 @@ export const createMember = async (req: Request, res: Response) => {
     }
 
     // Validate member discount (required field)
-    const validDiscounts = [0.9, 0.88, 0.85, 0.8, 0.75, 0.7];
+    const validDiscounts = [1, 0.9, 0.88, 0.85, 0.8, 0.75, 0.7];
     if (!memberData.memberDiscount || !validDiscounts.includes(memberData.memberDiscount)) {
       return res.status(400).json({ error: '请选择有效的会员折扣' });
     }
@@ -429,6 +429,19 @@ export const updateMember = async (req: Request, res: Response) => {
     delete updates.cashSpent;
     delete updates.visitCount;
     delete updates.createdAt;
+
+    // Normalize types for Prisma
+    if (typeof updates.birthday === 'string' && updates.birthday) {
+      const d = new Date(updates.birthday);
+      if (!isNaN(d.getTime())) {
+        updates.birthday = d;
+      } else {
+        delete updates.birthday; // avoid invalid Date errors
+      }
+    }
+    if (updates.email === '') delete updates.email;
+    if (updates.address === '') delete updates.address;
+    if (updates.notes === '') delete updates.notes;
 
     const member = await prisma.member.update({
       where: { id },

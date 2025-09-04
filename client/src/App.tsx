@@ -29,7 +29,7 @@ function HomePage() {
             <div className="text-center">
               <div className="text-3xl mb-4">👥</div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">会员管理</h3>
-              <p className="text-gray-600 mb-4">管理会员信息、等级和积分</p>
+              <p className="text-gray-600 mb-4">管理会员信息、折扣与余额</p>
               <Link 
                 to="/members" 
                 className="inline-block bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 transition-colors"

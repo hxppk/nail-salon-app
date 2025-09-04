@@ -170,8 +170,8 @@ export const AppointmentDetail: React.FC = () => {
                 <UserIcon className="h-5 w-5 text-gray-400 mr-2" />
                 <span className="text-lg font-semibold">{appointment.customerName}</span>
                 {appointment.member && (
-                  <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    👤 {appointment.member.membershipLevel}会员
+                  <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    👤 折扣 {appointment.member.memberDiscount === 1 ? '无折扣' : `${Math.round(appointment.member.memberDiscount * 100)}%`}
                   </span>
                 )}
               </div>

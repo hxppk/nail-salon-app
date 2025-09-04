@@ -19,6 +19,7 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
 }) => {
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<RechargeRequest['paymentMethod']>('CASH');
+  const [giftAmount, setGiftAmount] = useState('0');
   const [description, setDescription] = useState('');
   const [operatorName, setOperatorName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
     e.preventDefault();
     
     const amountNum = parseFloat(amount);
+    const giftNum = parseFloat(giftAmount || '0') || 0;
     if (!amountNum || amountNum <= 0) {
       setError('请输入有效的充值金额');
       return;
@@ -42,6 +44,7 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
 
     const request: RechargeRequest = {
       amount: amountNum,
+      giftAmount: giftNum,
       paymentMethod,
       description: description || undefined,
       operatorName: operatorName || undefined,
@@ -55,6 +58,7 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
       // Reset form
       setAmount('');
       setDescription('');
+      setGiftAmount('0');
       setOperatorName('');
       setPaymentMethod('CASH');
       
@@ -121,7 +125,7 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
                 {/* Amount input */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    充值金额 <span className="text-red-500">*</span>
+                    充值金额（充值余额）<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -151,6 +155,23 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
                       ))}
                     </div>
                   </div>
+                </div>
+
+                {/* Gift amount */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    赠金金额（可选）
+                  </label>
+                  <input
+                    type="number"
+                    value={giftAmount}
+                    onChange={(e) => setGiftAmount(e.target.value)}
+                    placeholder="请输入赠金金额（可为 0）"
+                    step="0.01"
+                    min="0"
+                    max="50000"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                  />
                 </div>
 
                 {/* Payment method */}

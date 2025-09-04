@@ -16,14 +16,13 @@ export interface Member {
   birthday?: string;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   address?: string;
-  membershipLevel: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
-  points: number;
-  balance: number;
+  memberDiscount: number; // 0.9, 0.88, 0.85, 0.8, 0.75, 0.7
+  rechargeBalance: number; // 充值余额
+  bonusBalance: number; // 赠金余额
+  balance: number; // 总余额 = 充值 + 赠金
   totalSpent: number;
   cashSpent: number;
   visitCount: number;
-  debtAmount: number;
-  joinDate: string;
   lastVisit?: string;
   notes?: string;
   createdAt: string;
@@ -155,13 +154,10 @@ export interface MemberStats {
   memberId: string;
   name: string;
   phone: string;
-  membershipLevel: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
   balance: number;
-  points: number;
   totalSpent: number;
   cashSpent: number;
   visitCount: number;
-  debtAmount: number;
   lastVisit?: string;
   joinDate: string;
   recentActivity: number;
@@ -170,6 +166,7 @@ export interface MemberStats {
 
 export interface RechargeRequest {
   amount: number;
+  giftAmount?: number;
   paymentMethod: 'CASH' | 'CARD' | 'ALIPAY' | 'WECHAT';
   description?: string;
   operatorName?: string;
@@ -182,7 +179,7 @@ export interface CreateMemberRequest {
   birthday?: string;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   address?: string;
-  membershipLevel?: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+  memberDiscount: 1 | 0.9 | 0.88 | 0.85 | 0.8 | 0.75 | 0.7;
   notes?: string;
 }
 
@@ -202,7 +199,7 @@ export interface MemberListFilters {
   page?: number;
   limit?: number;
   search?: string;
-  membershipLevel?: string;
+  discountLevel?: string;
   balanceStatus?: string;
   registrationPeriod?: string;
   activityStatus?: string;
