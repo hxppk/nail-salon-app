@@ -64,12 +64,12 @@ model Staff {
 
 model Service {
   id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  duration    Int
-  category    String
-  isActive    Boolean  @default(true)
+  name        String   @unique // 服务项目名称，必填且唯一
+  description String?  // 服务描述，可选
+  price       Float    // 服务价格，必填
+  duration    Int      @default(180) // 服务时长（分钟），默认180分钟
+  category    String?  // 服务分类，可选 (如"基础护理"、"美甲设计"等)
+  isActive    Boolean  @default(true) // 是否激活
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -80,17 +80,28 @@ model Service {
 
 model Appointment {
   id          String            @id @default(cuid())
-  memberId    String
+  memberId    String?           // Optional for non-member appointments
   staffId     String
+  customerName String           // For both member and non-member appointments
+  customerPhone String          // For both member and non-member appointments
+  customerGender String?        // MALE, FEMALE
+  guestCount  Int               @default(1) // Number of guests
+  maleGuests  Int               @default(0)
+  femaleGuests Int              @default(0)
   startTime   DateTime
   endTime     DateTime
-  status      String            @default("SCHEDULED")
+  serviceName String            // Service name for display
+  duration    Int               @default(180) // Service duration in minutes
+  status      String            @default("PENDING") // PENDING, CONFIRMED, ARRIVED, IN_SERVICE, COMPLETED, CANCELLED, OVERDUE
+  source      String            @default("MANUAL") // MANUAL, PHONE, APP
   notes       String?
+  userNotes   String?           // Customer notes
+  merchantNotes String?         // Merchant notes
   totalAmount Float             @default(0)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  member   Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member   Member?              @relation(fields: [memberId], references: [id], onDelete: SetNull)
   staff    Staff                @relation(fields: [staffId], references: [id])
   services AppointmentService[]
   transactions Transaction[]
@@ -145,11 +156,13 @@ model Product {
   @@map("products")
 }
 
+
 // SQLite does not support enums, using String types instead
 // Valid values for reference:
 // UserRole: ADMIN, STAFF, CUSTOMER
 // Gender: MALE, FEMALE, OTHER  
 // MembershipLevel: BRONZE, SILVER, GOLD, PLATINUM
-// AppointmentStatus: SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+// AppointmentStatus: PENDING, CONFIRMED, ARRIVED, IN_SERVICE, COMPLETED, CANCELLED, OVERDUE
+// AppointmentSource: MANUAL, PHONE, APP
 // TransactionType: RECHARGE, CONSUME, POINTS_REDEEM, REFUND
 // PaymentMethod: CASH, CARD, ALIPAY, WECHAT, BALANCE

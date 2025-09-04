@@ -7,6 +7,8 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import memberRoutes from './routes/memberRoutes';
+import appointmentRoutes from './routes/appointmentRoutes';
+import serviceRoutes from './routes/serviceRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -46,6 +48,8 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/members', memberRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/services', serviceRoutes);
 
 // API Routes placeholder
 app.get('/api', (req, res) => {
