@@ -38,10 +38,61 @@ export interface Service {
   description?: string;
   price: number;
   duration: number;
-  category: string;
+  category?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateServiceRequest {
+  name: string;
+  price: number;
+  category?: string;
+  description?: string;
+  duration?: number;
+}
+
+export interface UpdateServiceRequest {
+  name?: string;
+  price?: number;
+  category?: string;
+  description?: string;
+  duration?: number;
+  isActive?: boolean;
+}
+
+export interface ServiceListResponse {
+  services: Service[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export interface ServiceListFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  isActive?: boolean;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ServiceStats {
+  totalServices: number;
+  activeServices: number;
+  inactiveServices: number;
+  totalCategories: number;
+  recentServices: Service[];
+  categoryStats: Array<{
+    category: string;
+    _count: number;
+  }>;
 }
 
 export interface Staff {
@@ -57,19 +108,29 @@ export interface Staff {
 
 export interface Appointment {
   id: string;
-  memberId: string;
+  memberId?: string; // Optional for non-member appointments
   member?: Member;
   staffId: string;
   staff?: Staff;
-  services: string[];
-  serviceDetails?: Service[];
+  customerName: string;
+  customerPhone: string;
+  customerGender?: 'MALE' | 'FEMALE';
+  guestCount: number;
+  maleGuests: number;
+  femaleGuests: number;
+  serviceName: string;
+  duration: number; // in minutes
   startTime: string;
   endTime: string;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'CONFIRMED' | 'ARRIVED' | 'IN_SERVICE' | 'COMPLETED' | 'CANCELLED' | 'OVERDUE';
+  source: 'MANUAL' | 'PHONE' | 'APP';
   notes?: string;
+  userNotes?: string;
+  merchantNotes?: string;
   totalAmount: number;
   createdAt: string;
   updatedAt: string;
+  services?: AppointmentService[];
 }
 
 export interface Transaction {
@@ -160,4 +221,111 @@ export interface Product {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// Appointment related types
+export interface AppointmentService {
+  id: string;
+  appointmentId: string;
+  serviceId: string;
+  service: Service;
+}
+
+export interface CreateAppointmentRequest {
+  memberId?: string;
+  staffId: string;
+  customerName: string;
+  customerPhone: string;
+  customerGender?: 'MALE' | 'FEMALE';
+  guestCount: number;
+  maleGuests: number;
+  femaleGuests: number;
+  startTime: string; // ISO datetime string
+  serviceName: string;
+  duration: number; // in minutes
+  source?: 'MANUAL' | 'PHONE' | 'APP';
+  notes?: string;
+  userNotes?: string;
+  merchantNotes?: string;
+}
+
+export interface UpdateAppointmentRequest {
+  status?: 'PENDING' | 'CONFIRMED' | 'ARRIVED' | 'IN_SERVICE' | 'COMPLETED' | 'CANCELLED' | 'OVERDUE';
+  customerName?: string;
+  customerPhone?: string;
+  customerGender?: 'MALE' | 'FEMALE';
+  guestCount?: number;
+  maleGuests?: number;
+  femaleGuests?: number;
+  startTime?: string;
+  serviceName?: string;
+  duration?: number;
+  notes?: string;
+  userNotes?: string;
+  merchantNotes?: string;
+}
+
+export interface AppointmentListResponse {
+  appointments: Appointment[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export interface AppointmentListFilters {
+  date?: string; // YYYY-MM-DD
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  staffId?: string;
+  memberId?: string;
+  customerName?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AppointmentStats {
+  PENDING: number;
+  CONFIRMED: number;
+  ARRIVED: number;
+  IN_SERVICE: number;
+  COMPLETED: number;
+  CANCELLED: number;
+  OVERDUE: number;
+}
+
+export interface CalendarDay {
+  date: Date;
+  dateString: string; // YYYY-MM-DD
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  appointments: Appointment[];
+  stats: {
+    pending: number;
+    confirmed: number;
+    arrived: number;
+    inService: number;
+    completed: number;
+    cancelled: number;
+    overdue: number;
+  };
+}
+
+export interface TimeSlot {
+  time: string; // HH:mm format
+  timestamp: Date;
+  isAvailable: boolean;
+  appointments: Appointment[];
+}
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  phone: string;
+  specialties: string;
 }

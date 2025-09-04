@@ -1,15 +1,13 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
-import MemberDetail from './pages/MemberDetail'
+import { Services } from './pages/Services'
+import { CreateServiceOnly } from './components/services/CreateServiceOnly'
 import MemberList from './pages/MemberList'
+import MemberDetail from './pages/MemberDetail'
 import MemberRegister from './pages/MemberRegister'
 import { Appointments } from './pages/Appointments'
 import { AppointmentDetail } from './components/appointments/AppointmentDetail'
 import { EditAppointment } from './components/appointments/EditAppointment'
-import { Services } from './pages/Services'
-import { CreateService, EditService } from './components/services/ServiceForm'
-import { ServiceDetail } from './components/services/ServiceDetail'
-import './App.css'
 
 function HomePage() {
   return (
@@ -66,67 +64,65 @@ function HomePage() {
               </Link>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="text-center">
-              <div className="text-3xl mb-4">👨‍💼</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">员工管理</h3>
-              <p className="text-gray-600 mb-4">管理员工信息和排班</p>
-              <button className="bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition-colors">
-                员工设置
-              </button>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="text-center">
-              <div className="text-3xl mb-4">🛍️</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">产品管理</h3>
-              <p className="text-gray-600 mb-4">管理产品库存和销售</p>
-              <button className="bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition-colors">
-                产品库存
-              </button>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="text-center">
-              <div className="text-3xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">交易统计</h3>
-              <p className="text-gray-600 mb-4">查看收入和交易记录</p>
-              <button className="bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition-colors">
-                查看统计
-              </button>
-            </div>
-          </div>
         </div>
-        
-        <footer className="text-center mt-12 text-gray-500">
-          <p>© 2024 美甲店会员管理系统 - 专业版</p>
-        </footer>
       </div>
     </div>
   )
 }
 
-function App() {
+// 临时的简单页面组件
+function MembersPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <h1 className="text-2xl font-bold mb-4">会员管理</h1>
+      <p>会员管理功能正在开发中...</p>
+      <Link to="/" className="text-blue-500 hover:underline">返回首页</Link>
+    </div>
+  )
+}
+
+function AppointmentsPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <h1 className="text-2xl font-bold mb-4">预约管理</h1>
+      <p>预约管理功能正在开发中...</p>
+      <Link to="/" className="text-blue-500 hover:underline">返回首页</Link>
+    </div>
+  )
+}
+
+function ServicesPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <h1 className="text-2xl font-bold mb-4">服务管理</h1>
+      <p>服务管理功能正在开发中...</p>
+      <Link to="/" className="text-blue-500 hover:underline">返回首页</Link>
+    </div>
+  )
+}
+
+function SimpleApp() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        
+        {/* 会员管理路由 */}
         <Route path="/members" element={<MemberList />} />
         <Route path="/members/register" element={<MemberRegister />} />
         <Route path="/member/:id" element={<MemberDetail />} />
+        
+        {/* 预约管理路由 */}
         <Route path="/appointments" element={<Appointments />} />
         <Route path="/appointments/:id" element={<AppointmentDetail />} />
         <Route path="/appointments/:id/edit" element={<EditAppointment />} />
+        
+        {/* 服务管理路由 */}
         <Route path="/services" element={<Services />} />
-        <Route path="/services/create" element={<CreateService />} />
-        <Route path="/services/:id" element={<ServiceDetail />} />
-        <Route path="/services/:id/edit" element={<EditService />} />
+        <Route path="/services/create" element={<CreateServiceOnly />} />
       </Routes>
     </Router>
   )
 }
 
-export default App
+export default SimpleApp

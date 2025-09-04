@@ -1,6 +1,6 @@
 import { Member, MemberStats, Transaction, RechargeRequest, CreateMemberRequest, MemberListResponse, MemberListFilters } from '../types';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:3002/api';
 
 export const memberApi = {
   // Get all members with filters
