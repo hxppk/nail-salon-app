@@ -91,10 +91,16 @@ const TransactionList: React.FC<TransactionListProps> = ({
     return methods[method as keyof typeof methods] || method;
   };
 
-  const formatAmount = (amount: number, type: string) => {
-    const absAmount = Math.abs(amount);
-    const sign = type === 'RECHARGE' || type === 'REFUND' ? '+' : '-';
-    return `${sign}¥${absAmount.toFixed(2)}`;
+  const formatAmount = (transaction: Transaction) => {
+    if (transaction.type === 'RECHARGE') {
+      // 充值显示总到账金额（充值金额+赠金金额）
+      const totalAmount = transaction.amount + (transaction.giftAmount || 0);
+      return `+¥${totalAmount.toFixed(2)}`;
+    } else if (transaction.type === 'REFUND') {
+      return `+¥${Math.abs(transaction.amount).toFixed(2)}`;
+    } else {
+      return `-¥${Math.abs(transaction.amount).toFixed(2)}`;
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -195,7 +201,16 @@ const TransactionList: React.FC<TransactionListProps> = ({
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mb-1">{transaction.description}</p>
+                    {/* Enhanced description for recharge transactions */}
+                    {transaction.type === 'RECHARGE' && transaction.giftAmount > 0 ? (
+                      <div className="text-sm text-gray-600 mb-1">
+                        <span>充值 ¥{transaction.amount.toFixed(2)}</span>
+                        <span className="text-orange-600"> + 赠¥{transaction.giftAmount.toFixed(2)}</span>
+                        <span> = 到账¥{(transaction.amount + transaction.giftAmount).toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600 mb-1">{transaction.description}</p>
+                    )}
                     <p className="text-xs text-gray-500">
                       {formatDate(transaction.createdAt)}
                       {transaction.operatorName && ` • 操作员: ${transaction.operatorName}`}
@@ -210,21 +225,11 @@ const TransactionList: React.FC<TransactionListProps> = ({
                       ? 'text-green-600'
                       : 'text-red-600'
                   }`}>
-                    {formatAmount(transaction.amount, transaction.type)}
+                    {formatAmount(transaction)}
                   </p>
                   <p className="text-sm text-gray-500">
                     余额: ¥{transaction.balanceAfter.toFixed(2)}
                   </p>
-                  {transaction.pointsEarned > 0 && (
-                    <p className="text-xs text-blue-600">
-                      +{transaction.pointsEarned} 积分
-                    </p>
-                  )}
-                  {transaction.pointsUsed > 0 && (
-                    <p className="text-xs text-orange-600">
-                      -{transaction.pointsUsed} 积分
-                    </p>
-                  )}
                 </div>
               </div>
             ))}

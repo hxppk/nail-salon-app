@@ -18,6 +18,7 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
   memberName,
 }) => {
   const [amount, setAmount] = useState('');
+  const [giftAmount, setGiftAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<RechargeRequest['paymentMethod']>('CASH');
   const [description, setDescription] = useState('');
   const [operatorName, setOperatorName] = useState('');
@@ -30,6 +31,8 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
     e.preventDefault();
     
     const amountNum = parseFloat(amount);
+    const giftAmountNum = parseFloat(giftAmount) || 0;
+    
     if (!amountNum || amountNum <= 0) {
       setError('请输入有效的充值金额');
       return;
@@ -40,8 +43,14 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
       return;
     }
 
+    if (giftAmountNum < 0) {
+      setError('赠金金额不能为负数');
+      return;
+    }
+
     const request: RechargeRequest = {
       amount: amountNum,
+      giftAmount: giftAmountNum,
       paymentMethod,
       description: description || undefined,
       operatorName: operatorName || undefined,
@@ -54,6 +63,7 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
       
       // Reset form
       setAmount('');
+      setGiftAmount('');
       setDescription('');
       setOperatorName('');
       setPaymentMethod('CASH');
@@ -153,6 +163,23 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
                   </div>
                 </div>
 
+                {/* Gift amount input */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    赠金金额
+                  </label>
+                  <input
+                    type="number"
+                    value={giftAmount}
+                    onChange={(e) => setGiftAmount(e.target.value)}
+                    placeholder="请输入赠金金额（可为0）"
+                    step="0.01"
+                    min="0"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                  />
+                  <p className="mt-2 text-sm text-gray-500">赠金金额由商家决定，可以为0</p>
+                </div>
+
                 {/* Payment method */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -180,6 +207,30 @@ const RechargeModal: React.FC<RechargeModalProps> = ({
                     ))}
                   </div>
                 </div>
+
+                {/* Amount Summary */}
+                {amount && parseFloat(amount) > 0 && (
+                  <div className="mb-6">
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-700">实收金额:</span>
+                        <span className="text-gray-900 font-medium">¥{parseFloat(amount).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-700">赠送金额:</span>
+                        <span className="text-orange-600 font-medium">
+                          ¥{parseFloat(giftAmount || '0').toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-base pt-2 border-t border-gray-200">
+                        <span className="text-purple-800 font-semibold">到账金额:</span>
+                        <span className="text-purple-900 font-bold">
+                          ¥{(parseFloat(amount) + parseFloat(giftAmount || '0')).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Description */}
                 <div className="mb-6">

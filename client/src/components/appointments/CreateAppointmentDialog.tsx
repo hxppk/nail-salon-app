@@ -5,7 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { appointmentApi } from '../../services/appointmentApi';
 import { memberApi } from '../../services/memberApi';
-import { CreateAppointmentRequest, StaffMember, Member } from '../../types';
+import { serviceApi } from '../../services/serviceApi';
+import { CreateAppointmentRequest, StaffMember, Member, Service } from '../../types';
 import toast from 'react-hot-toast';
 
 const createAppointmentSchema = z.object({
@@ -16,6 +17,7 @@ const createAppointmentSchema = z.object({
   customerGender: z.enum(['MALE', 'FEMALE']).optional(),
   guestCount: z.number().min(1, '至少1位客人'),
   startTime: z.string().min(1, '请选择预约时间'),
+  serviceId: z.string().min(1, '请选择服务项目'),
   serviceName: z.string().min(1, '请输入服务项目'),
   duration: z.number().min(30, '服务时长至少30分钟'),
   notes: z.string().optional(),
@@ -43,8 +45,10 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   const [isLoading, setIsLoading] = useState(false);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [searchMemberQuery, setSearchMemberQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isNewMember, setIsNewMember] = useState(false);
   const [phoneNumberType, setPhoneNumberType] = useState<'real' | 'virtual'>('real');
 
@@ -69,20 +73,24 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
 
   const watchGuestCount = watch('guestCount');
 
-  // Load staff data
+  // Load staff and services data
   useEffect(() => {
-    const loadStaff = async () => {
+    const loadData = async () => {
       try {
-        const staffData = await appointmentApi.getAvailableStaff();
+        const [staffData, servicesResponse] = await Promise.all([
+          appointmentApi.getAvailableStaff(),
+          serviceApi.getServices({ isActive: true })
+        ]);
         setStaff(staffData);
+        setServices(servicesResponse.services);
       } catch (error) {
-        console.error('Failed to load staff:', error);
-        toast.error('加载技师列表失败');
+        console.error('Failed to load data:', error);
+        toast.error('加载数据失败');
       }
     };
 
     if (isOpen) {
-      loadStaff();
+      loadData();
     }
   }, [isOpen]);
 
@@ -122,6 +130,7 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
         startTime: defaultDate && defaultTime ? `${defaultDate}T${defaultTime}:00` : '',
       });
       setSelectedMember(null);
+      setSelectedService(null);
       setIsNewMember(false);
       setSearchMemberQuery('');
     }
@@ -147,6 +156,13 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
       setValue('customerPhone', '');
       setValue('customerGender', undefined);
     }
+  };
+
+  const handleServiceSelect = (service: Service) => {
+    setSelectedService(service);
+    setValue('serviceId', service.id);
+    setValue('serviceName', service.name);
+    setValue('duration', service.duration);
   };
 
   const onSubmit = async (data: CreateAppointmentForm) => {
@@ -382,52 +398,116 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
                   )}
                 </div>
 
-                {/* Service and Staff */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      服务项目 *
-                    </label>
-                    <input
-                      type="text"
-                      {...register('serviceName')}
-                      placeholder="如：独立款式设计"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    {errors.serviceName && (
-                      <p className="mt-1 text-sm text-red-600">{errors.serviceName.message}</p>
-                    )}
-                  </div>
+                {/* Service Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    服务项目 *
+                  </label>
+                  
+                  {selectedService ? (
+                    <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-blue-900">{selectedService.name}</div>
+                          <div className="text-sm text-blue-600">
+                            {serviceApi.formatPrice(selectedService.price)} | {serviceApi.formatDuration(selectedService.duration)}
+                            {selectedService.category && (
+                              <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${serviceApi.getCategoryColor(selectedService.category)}`}>
+                                {selectedService.category}
+                              </span>
+                            )}
+                          </div>
+                          {selectedService.description && (
+                            <div className="text-sm text-gray-600 mt-1">{selectedService.description}</div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedService(null);
+                            setValue('serviceId', '');
+                            setValue('serviceName', '');
+                            setValue('duration', 180);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          更换
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md">
+                        {services.length > 0 ? (
+                          services.map((service) => (
+                            <button
+                              key={service.id}
+                              type="button"
+                              onClick={() => handleServiceSelect(service)}
+                              className="w-full px-3 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 focus:outline-none focus:bg-blue-50"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium">{service.name}</div>
+                                  <div className="text-sm text-gray-600">
+                                    {serviceApi.formatPrice(service.price)} | {serviceApi.formatDuration(service.duration)}
+                                    {service.category && (
+                                      <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${serviceApi.getCategoryColor(service.category)}`}>
+                                        {service.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {service.description && (
+                                    <div className="text-sm text-gray-500 mt-1">{service.description}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-4 text-center text-gray-500">
+                            暂无可用服务项目
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {errors.serviceId && (
+                    <p className="mt-1 text-sm text-red-600">{errors.serviceId.message}</p>
+                  )}
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      技师 *
-                    </label>
-                    <select
-                      {...register('staffId')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">选择技师</option>
-                      {staff.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.name}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.staffId && (
-                      <p className="mt-1 text-sm text-red-600">{errors.staffId.message}</p>
-                    )}
-                  </div>
+                {/* Staff Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    技师 *
+                  </label>
+                  <select
+                    {...register('staffId')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">选择技师</option>
+                    {staff.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.staffId && (
+                    <p className="mt-1 text-sm text-red-600">{errors.staffId.message}</p>
+                  )}
                 </div>
 
                 {/* Duration */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     时长（分钟）
+                    {selectedService && <span className="text-sm text-gray-500 font-normal"> - 根据服务项目自动设置</span>}
                   </label>
                   <select
                     {...register('duration', { valueAsNumber: true })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    disabled={!!selectedService}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value={30}>30分钟</option>
                     <option value={60}>60分钟</option>

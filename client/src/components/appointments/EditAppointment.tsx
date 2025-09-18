@@ -6,7 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { appointmentApi } from '../../services/appointmentApi';
 import { memberApi } from '../../services/memberApi';
-import { Appointment, StaffMember, Member } from '../../types';
+import { serviceApi } from '../../services/serviceApi';
+import { Appointment, StaffMember, Member, Service } from '../../types';
 import toast from 'react-hot-toast';
 
 const updateAppointmentSchema = z.object({
@@ -17,6 +18,7 @@ const updateAppointmentSchema = z.object({
   customerGender: z.enum(['MALE', 'FEMALE']).optional(),
   guestCount: z.number().min(1, '至少1位客人'),
   startTime: z.string().min(1, '请选择预约时间'),
+  serviceId: z.string().optional(),
   serviceName: z.string().min(1, '请输入服务项目'),
   duration: z.number().min(30, '服务时长至少30分钟'),
   userNotes: z.string().optional(),
@@ -32,8 +34,10 @@ export const EditAppointment: React.FC = () => {
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [searchMemberQuery, setSearchMemberQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isNewMember, setIsNewMember] = useState(false);
   const [phoneNumberType, setPhoneNumberType] = useState<'real' | 'virtual'>('real');
 

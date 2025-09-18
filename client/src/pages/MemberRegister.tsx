@@ -12,7 +12,7 @@ const MemberRegister: React.FC = () => {
     birthday: '',
     gender: undefined,
     address: '',
-    membershipLevel: 'BRONZE',
+    memberDiscount: 0.9, // 默认9折
     notes: '',
   });
   const [loading, setLoading] = useState(false);
@@ -56,6 +56,12 @@ const MemberRegister: React.FC = () => {
       }
     }
 
+    // Validate member discount (required field)
+    const validDiscounts = [0.9, 0.88, 0.85, 0.8, 0.75, 0.7];
+    if (!formData.memberDiscount || !validDiscounts.includes(formData.memberDiscount)) {
+      newErrors.memberDiscount = '请选择有效的会员折扣';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -94,7 +100,7 @@ const MemberRegister: React.FC = () => {
     }
   };
 
-  const handleInputChange = (field: keyof CreateMemberRequest, value: string) => {
+  const handleInputChange = (field: keyof CreateMemberRequest, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -102,28 +108,29 @@ const MemberRegister: React.FC = () => {
     }
   };
 
-  const getMembershipLevelText = (level: string) => {
-    const levels = {
-      BRONZE: '铜牌会员',
-      SILVER: '银牌会员',
-      GOLD: '金牌会员',
-      PLATINUM: '白金会员'
+  const getDiscountText = (discount: number) => {
+    const discountMap = {
+      0.9: '9折',
+      0.88: '88折',
+      0.85: '85折',
+      0.8: '8折',
+      0.75: '75折',
+      0.7: '7折'
     };
-    return levels[level as keyof typeof levels] || level;
+    return discountMap[discount as keyof typeof discountMap] || `${Math.round(discount * 100)}折`;
   };
 
-  const getMembershipLevelColor = (level: string) => {
-    switch (level) {
-      case 'BRONZE':
-        return 'bg-gradient-to-r from-amber-600 to-amber-500';
-      case 'SILVER':
-        return 'bg-gradient-to-r from-gray-400 to-gray-300';
-      case 'GOLD':
-        return 'bg-gradient-to-r from-yellow-400 to-yellow-300';
-      case 'PLATINUM':
-        return 'bg-gradient-to-r from-purple-500 to-purple-400';
-      default:
-        return 'bg-gradient-to-r from-gray-400 to-gray-300';
+  const getDiscountColor = (discount: number) => {
+    if (discount >= 0.9) {
+      return 'bg-green-100 text-green-800 border-green-200';
+    } else if (discount >= 0.85) {
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    } else if (discount >= 0.8) {
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    } else if (discount >= 0.75) {
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    } else {
+      return 'bg-red-100 text-red-800 border-red-200';
     }
   };
 
@@ -246,35 +253,38 @@ const MemberRegister: React.FC = () => {
               />
             </div>
 
-            {/* Membership Level */}
+            {/* Member Discount */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                会员等级
+                会员折扣 <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {(['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'] as const).map((level) => (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {([0.9, 0.88, 0.85, 0.8, 0.75, 0.7] as const).map((discount) => (
                   <label
-                    key={level}
-                    className={`relative flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      formData.membershipLevel === level
+                    key={discount}
+                    className={`relative flex items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.memberDiscount === discount
                         ? 'border-purple-500 bg-purple-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <input
                       type="radio"
-                      value={level}
-                      checked={formData.membershipLevel === level}
-                      onChange={(e) => handleInputChange('membershipLevel', e.target.value)}
+                      value={discount}
+                      checked={formData.memberDiscount === discount}
+                      onChange={(e) => handleInputChange('memberDiscount', parseFloat(e.target.value))}
                       className="sr-only"
                     />
                     <div className="text-center">
-                      <div className={`w-6 h-6 mx-auto mb-1 rounded ${getMembershipLevelColor(level)}`}></div>
-                      <span className="text-sm font-medium">{getMembershipLevelText(level)}</span>
+                      <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getDiscountColor(discount)}`}>
+                        {getDiscountText(discount)}
+                      </div>
                     </div>
                   </label>
                 ))}
               </div>
+              {errors.memberDiscount && <p className="text-red-500 text-sm mt-1">{errors.memberDiscount}</p>}
+              <p className="text-sm text-gray-500 mt-2">会员折扣将影响消费时的价格计算</p>
             </div>
 
             {/* Notes */}

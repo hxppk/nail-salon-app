@@ -126,10 +126,26 @@ export const ServiceFormComponent: React.FC<ServiceFormProps> = ({ mode }) => {
     '特色服务',
   ];
 
-  if (mode === 'edit' && !service && isLoading) {
+  if (mode === 'edit' && isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex justify-center items-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (mode === 'edit' && !service && !isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">服务项目不存在</div>
+          <button
+            onClick={() => navigate('/services')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            返回服务列表
+          </button>
+        </div>
       </div>
     );
   }

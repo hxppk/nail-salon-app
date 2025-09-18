@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Member, MemberStats, Transaction } from '../types';
 import { memberApi } from '../services/memberApi';
 import RechargeModal from '../components/RechargeModal';
+import MemberEditModal from '../components/MemberEditModal';
 import TransactionList from '../components/TransactionList';
 
 const MemberDetail: React.FC = () => {
@@ -14,6 +15,7 @@ const MemberDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const fetchMemberData = async () => {
     if (!id) return;
@@ -46,29 +48,38 @@ const MemberDetail: React.FC = () => {
     setShowRechargeModal(false);
   };
 
-  const getMembershipLevelColor = (level: string) => {
-    switch (level) {
-      case 'BRONZE':
-        return 'bg-gradient-to-r from-amber-600 to-amber-500';
-      case 'SILVER':
-        return 'bg-gradient-to-r from-gray-400 to-gray-300';
-      case 'GOLD':
-        return 'bg-gradient-to-r from-yellow-400 to-yellow-300';
-      case 'PLATINUM':
-        return 'bg-gradient-to-r from-purple-500 to-purple-400';
-      default:
-        return 'bg-gradient-to-r from-gray-400 to-gray-300';
-    }
+  const handleEditSuccess = () => {
+    fetchMemberData();
+    setShowEditModal(false);
   };
 
-  const getMembershipLevelText = (level: string) => {
-    const levels = {
-      BRONZE: '铜牌会员',
-      SILVER: '银牌会员',
-      GOLD: '金牌会员',
-      PLATINUM: '白金会员'
+  const getDiscountText = (discount: number) => {
+    if (discount >= 1.0) return '无折扣';
+    const discountMap = {
+      0.9: '9折',
+      0.88: '88折',
+      0.85: '85折',
+      0.8: '8折',
+      0.75: '75折',
+      0.7: '7折'
     };
-    return levels[level as keyof typeof levels] || level;
+    return discountMap[discount as keyof typeof discountMap] || `${Math.round(discount * 100)}折`;
+  };
+
+  const getDiscountColor = (discount: number) => {
+    if (discount >= 1.0) {
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    } else if (discount >= 0.9) {
+      return 'bg-green-100 text-green-800 border-green-200';
+    } else if (discount >= 0.85) {
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    } else if (discount >= 0.8) {
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    } else if (discount >= 0.75) {
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    } else {
+      return 'bg-red-100 text-red-800 border-red-200';
+    }
   };
 
   if (loading) {
@@ -118,26 +129,34 @@ const MemberDetail: React.FC = () => {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">{member.name}</h2>
               <p className="text-gray-600 mb-2">{member.phone}</p>
-              <div className={`inline-flex items-center px-3 py-1 rounded-full text-white text-sm font-medium ${getMembershipLevelColor(member.membershipLevel)}`}>
-                {getMembershipLevelText(member.membershipLevel)}
+              <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getDiscountColor(member.memberDiscount)}`}>
+                会员折扣: {getDiscountText(member.memberDiscount)}
               </div>
             </div>
-            <button
-              onClick={() => setShowRechargeModal(true)}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200"
-            >
-              充值
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200"
+              >
+                编辑
+              </button>
+              <button
+                onClick={() => setShowRechargeModal(true)}
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200"
+              >
+                充值
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Balance Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">有效卡余额</p>
-                <p className="text-2xl font-bold text-green-600">¥{member.balance.toFixed(2)}</p>
+                <p className="text-sm text-gray-600 mb-1">充值余额</p>
+                <p className="text-2xl font-bold text-green-600">¥{member.rechargeBalance.toFixed(2)}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,26 +169,12 @@ const MemberDetail: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">欠款金额</p>
-                <p className="text-2xl font-bold text-red-600">¥{member.debtAmount.toFixed(2)}</p>
+                <p className="text-sm text-gray-600 mb-1">赠金余额</p>
+                <p className="text-2xl font-bold text-orange-600">¥{member.bonusBalance.toFixed(2)}</p>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">会员积分</p>
-                <p className="text-2xl font-bold text-blue-600">{member.points}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                 </svg>
               </div>
             </div>
@@ -243,6 +248,14 @@ const MemberDetail: React.FC = () => {
           onSuccess={handleRechargeSuccess}
           memberId={id!}
           memberName={member.name}
+        />
+
+        {/* Edit Modal */}
+        <MemberEditModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={handleEditSuccess}
+          member={member}
         />
       </div>
     </div>

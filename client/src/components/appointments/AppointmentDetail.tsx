@@ -11,6 +11,7 @@ import {
   AlertTriangleIcon
 } from 'lucide-react';
 import { appointmentApi } from '../../services/appointmentApi';
+import { serviceApi } from '../../services/serviceApi';
 import { Appointment } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -261,18 +262,33 @@ export const AppointmentDetail: React.FC = () => {
             <h3 className="text-lg font-medium text-gray-900">服务详情</h3>
           </div>
           <div className="px-6 py-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">项目</label>
-                <p className="mt-1 text-sm text-gray-900">{appointment.serviceName}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">服务项目</label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="font-medium text-gray-900">{appointment.serviceName}</div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    时长：{serviceApi.formatDuration(appointment.duration)}
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">技师</label>
-                <p className="mt-1 text-sm text-gray-900">{appointment.staff?.name}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">时长</label>
-                <p className="mt-1 text-sm text-gray-900">{appointment.duration}分钟</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">技师</label>
+                  <p className="mt-1 text-sm text-gray-900">{appointment.staff?.name || '未指定'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">预约来源</label>
+                  <span className={`mt-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    appointment.source === 'MANUAL' ? 'bg-blue-100 text-blue-800' :
+                    appointment.source === 'PHONE' ? 'bg-green-100 text-green-800' :
+                    'bg-purple-100 text-purple-800'
+                  }`}>
+                    {appointment.source === 'MANUAL' ? '手动创建' :
+                     appointment.source === 'PHONE' ? '电话预约' :
+                     'APP预约'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

@@ -16,13 +16,12 @@ export interface Member {
   birthday?: string;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   address?: string;
-  membershipLevel: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
-  points: number;
-  balance: number;
-  totalSpent: number;
-  cashSpent: number;
-  visitCount: number;
-  debtAmount: number;
+  memberDiscount: number; // 会员折扣 (0.1-1.0)
+  rechargeBalance: number; // 充值余额
+  bonusBalance: number; // 赠金余额
+  totalSpent: number; // 总消费金额
+  cashSpent: number; // 现金消费金额
+  visitCount: number; // 到店次数
   joinDate: string;
   lastVisit?: string;
   notes?: string;
@@ -140,7 +139,8 @@ export interface Transaction {
   appointmentId?: string;
   appointment?: Appointment;
   type: 'RECHARGE' | 'CONSUME' | 'POINTS_REDEEM' | 'REFUND';
-  amount: number;
+  amount: number; // 充值金额或消费金额
+  giftAmount: number; // 赠金金额，仅在RECHARGE类型时使用
   balanceBefore: number;
   balanceAfter: number;
   pointsEarned: number;
@@ -169,7 +169,8 @@ export interface MemberStats {
 }
 
 export interface RechargeRequest {
-  amount: number;
+  amount: number; // 充值金额（用户实际支付金额）
+  giftAmount: number; // 赠金金额（商家赠送金额，可以为0）
   paymentMethod: 'CASH' | 'CARD' | 'ALIPAY' | 'WECHAT';
   description?: string;
   operatorName?: string;
@@ -182,7 +183,7 @@ export interface CreateMemberRequest {
   birthday?: string;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   address?: string;
-  membershipLevel?: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+  memberDiscount: number; // 会员折扣，必选：0.9(9折)、0.88(88折)、0.85(85折)、0.8(8折)、0.75(75折)、0.7(7折)
   notes?: string;
 }
 
@@ -202,7 +203,7 @@ export interface MemberListFilters {
   page?: number;
   limit?: number;
   search?: string;
-  membershipLevel?: string;
+  discountLevel?: string; // 会员折扣等级
   balanceStatus?: string;
   registrationPeriod?: string;
   activityStatus?: string;
