@@ -9,6 +9,8 @@ import { PrismaClient } from '@prisma/client';
 import memberRoutes from './routes/memberRoutes';
 import appointmentRoutes from './routes/appointmentRoutes';
 import serviceRoutes from './routes/serviceRoutes';
+import orderRoutes from './routes/orderRoutes';
+import staffRoutes from './routes/staffRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -51,6 +53,8 @@ app.get('/health', (req, res) => {
 app.use('/api/members', memberRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/staff', staffRoutes);
 
 // API Routes placeholder
 app.get('/api', (req, res) => {
@@ -63,6 +67,7 @@ app.get('/api', (req, res) => {
       members: '/api/members/*',
       appointments: '/api/appointments/*',
       services: '/api/services/*',
+      orders: '/api/orders/*',
       staff: '/api/staff/*',
       products: '/api/products/*',
       transactions: '/api/transactions/*'

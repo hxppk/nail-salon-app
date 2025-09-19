@@ -42,6 +42,7 @@ model Member {
 
   appointments Appointment[]
   transactions Transaction[]
+  orders       Order[]
 
   @@map("members")
 }
@@ -104,6 +105,7 @@ model Appointment {
   staff    Staff                @relation(fields: [staffId], references: [id])
   services AppointmentService[]
   transactions Transaction[]
+  order    Order?
 
   @@map("appointments")
 }
@@ -124,6 +126,7 @@ model Transaction {
   id            String          @id @default(cuid())
   memberId      String
   appointmentId String?
+  orderId       String?
   type          String          // RECHARGE, CONSUME, POINTS_REDEEM, REFUND
   amount        Float           // 充值金额或消费金额
   giftAmount    Float           @default(0) // 赠金金额，仅在RECHARGE类型时使用
@@ -138,6 +141,7 @@ model Transaction {
 
   member      Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
   appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  order       Order?       @relation(fields: [orderId], references: [id])
 
   @@map("transactions")
 }
@@ -156,13 +160,65 @@ model Product {
   @@map("products")
 }
 
+model Order {
+  id               String   @id @default(cuid())
+  orderNumber      String   @unique // 手工单号
+  memberId         String?  // 会员ID（可选，非会员也可开单）
+  appointmentId    String?  @unique // 关联预约ID（可选）
+  customerName     String   // 顾客姓名
+  customerPhone    String   // 顾客手机号
+  maleCount        Int      @default(0) // 男性人数
+  femaleCount      Int      @default(0) // 女性人数
+  source           String   @default("MANUAL") // 顾客来源：MANUAL, PHONE, APP, APPOINTMENT
+  totalAmount      Float    // 订单总金额
+  discountAmount   Float    @default(0) // 会员折扣金额
+  actualAmount     Float    // 实际应付金额（扣除折扣后）
+  paidAmount       Float    @default(0) // 已支付金额
+  memberDiscount   Float    @default(1.0) // 会员折扣率
+  giftDiscountEnabled Boolean @default(true) // 赠金是否参与会员折扣
+  deductionOrder   String   @default("GIFT_FIRST") // 扣减方式：GIFT_FIRST, RECHARGE_FIRST
+  rechargePaid     Float    @default(0) // 充值余额支付金额
+  giftPaid         Float    @default(0) // 赠金余额支付金额
+  status           String   @default("PENDING") // PENDING, PAID, CANCELLED
+  notes            String?  // 备注
+  operatorName     String?  // 操作员姓名
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  member       Member?      @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  appointment  Appointment? @relation(fields: [appointmentId], references: [id])
+  orderItems   OrderItem[]
+  transactions Transaction[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  serviceName  String  // 服务项目名称
+  serviceStaff String? // 服务人员
+  salesStaff   String? // 销售人员
+  unitPrice    Float   // 单价
+  quantity     Int     @default(1) // 数量
+  subtotal     Float   // 小计金额
+  createdAt    DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
 
 // SQLite does not support enums, using String types instead
 // Valid values for reference:
 // UserRole: ADMIN, STAFF, CUSTOMER
-// Gender: MALE, FEMALE, OTHER  
+// Gender: MALE, FEMALE, OTHER
 // MembershipLevel: BRONZE, SILVER, GOLD, PLATINUM
 // AppointmentStatus: PENDING, CONFIRMED, ARRIVED, IN_SERVICE, COMPLETED, CANCELLED, OVERDUE
 // AppointmentSource: MANUAL, PHONE, APP
 // TransactionType: RECHARGE, CONSUME, POINTS_REDEEM, REFUND
 // PaymentMethod: CASH, CARD, ALIPAY, WECHAT, BALANCE
+// OrderStatus: PENDING, PAID, CANCELLED
+// OrderSource: MANUAL, PHONE, APP, APPOINTMENT
+// DeductionOrder: GIFT_FIRST, RECHARGE_FIRST

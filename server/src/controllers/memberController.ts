@@ -114,7 +114,7 @@ export const getMembers = async (req: Request, res: Response) => {
       registrationPeriod = '',
       activityStatus = '',
       spendingLevel = '',
-      sortBy = 'createdAt',
+      sortBy = 'updatedAt',
       sortOrder = 'desc'
     }: MemberListQuery = req.query;
 
@@ -191,6 +191,18 @@ export const getMembers = async (req: Request, res: Response) => {
       }
     }
 
+    // Handle special sorting cases
+    let orderBy: any;
+    if (sortBy === 'balance') {
+      // Sort by total balance (rechargeBalance + bonusBalance)
+      orderBy = [
+        { rechargeBalance: sortOrder },
+        { bonusBalance: sortOrder }
+      ];
+    } else {
+      orderBy = { [sortBy]: sortOrder };
+    }
+
     // Get members with transactions for activity filtering
     let members = await prisma.member.findMany({
       where,
@@ -204,7 +216,7 @@ export const getMembers = async (req: Request, res: Response) => {
           take: 1
         }
       },
-      orderBy: { [sortBy]: sortOrder },
+      orderBy,
       skip,
       take: limitNum
     });
